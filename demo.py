@@ -10,7 +10,16 @@ import requests
 import json
 import time
 import re
+import os
+import sys
 from typing import Dict, List, Tuple, Optional
+
+# Import STEP file generation functionality
+try:
+    from freecad_generator import create_iceman_stp
+    STEP_GENERATION_AVAILABLE = True
+except ImportError:
+    STEP_GENERATION_AVAILABLE = False
 
 class CADModelDemo:
     def __init__(self):
@@ -348,41 +357,153 @@ Output: cylinder(r=2, h=8);"""
         for instruction in test_cases:
             self.compare_models(instruction, available_models)
     
+    def generate_step_file(self):
+        """Generate iceman STEP file"""
+        if not STEP_GENERATION_AVAILABLE:
+            print("\n❌ STEP generation not available")
+            print("💡 Make sure FreeCAD is installed and freecad_generator.py is present")
+            return
+        
+        print("\n🎿 CAD ICEMAN STEP FILE GENERATOR")
+        print("="*50)
+        print("Create a classic snowman-style iceman using spheres and cubes")
+        print("Output: Professional .stp file compatible with all CAD software")
+        
+        # Get filename
+        default_name = "iceman.stp"
+        filename = input(f"\nEnter filename (or press Enter for '{default_name}'): ").strip()
+        if not filename:
+            filename = default_name
+        
+        # Ensure .stp extension
+        if not filename.endswith('.stp') and not filename.endswith('.step'):
+            filename += '.stp'
+        
+        # Check if file exists
+        if os.path.exists(filename):
+            overwrite = input(f"⚠️  '{filename}' exists. Overwrite? (y/n): ").strip().lower()
+            if overwrite not in ['y', 'yes']:
+                print("❌ Operation cancelled")
+                return
+        
+        print(f"\n🚀 Generating iceman model...")
+        print("   This may take a moment while FreeCAD initializes...")
+        
+        try:
+            success = create_iceman_stp(filename)
+            
+            if success:
+                full_path = os.path.abspath(filename)
+                file_size = os.path.getsize(full_path) if os.path.exists(full_path) else 0
+                
+                print(f"\n🎉 SUCCESS! Iceman created successfully!")
+                print(f"📁 File: {full_path}")
+                print(f"📊 Size: {file_size:,} bytes")
+                print(f"\n🔧 Compatible with:")
+                print("   • FreeCAD (Free)")
+                print("   • Fusion 360") 
+                print("   • SolidWorks")
+                print("   • AutoCAD")
+                print("   • Any STEP-compatible CAD software")
+                print(f"\n💡 Next: Open '{filename}' in your CAD software to view the 3D model")
+            else:
+                print(f"\n❌ Failed to create STEP file")
+                print("💡 Make sure FreeCAD is properly installed")
+                
+        except Exception as e:
+            print(f"\n❌ Error creating STEP file: {e}")
+    
     def main_menu(self):
         """Main menu for the demo"""
         print("🛠️  CAD Generation Model Comparison Demo")
         print("="*50)
         
-        if not self.check_ollama_connection():
-            print("❌ Error: Ollama is not running!")
-            print("\nPlease start Ollama:")
-            print("1. Install: brew install ollama")
-            print("2. Start: ollama serve")
-            print("3. Download models: ollama pull gemma3:1b")
-            return
+        # Check Ollama for LLM features
+        ollama_available = self.check_ollama_connection()
+        if ollama_available:
+            print("✅ Ollama connection successful")
+        else:
+            print("⚠️  Ollama not running (LLM features disabled)")
         
-        print("✅ Ollama connection successful")
+        # Check STEP generation availability
+        if STEP_GENERATION_AVAILABLE:
+            print("✅ STEP file generation available")
+        else:
+            print("⚠️  FreeCAD not found (STEP generation disabled)")
         
         while True:
-            print("\nOptions:")
-            print("1. 🎯 Interactive Mode - Test any CAD instruction")
-            print("2. 🚀 Preset Demo - Showcase key performance differences") 
-            print("3. 📋 Show Examples - Sample CAD instructions")
-            print("4. 🚪 Exit")
+            print("\n" + "="*50)
+            print("OPTIONS:")
             
-            choice = input("\nChoice (1-4): ").strip()
+            # LLM-based features (require Ollama)
+            if ollama_available:
+                print("1. 🎯 Interactive Mode - Test any CAD instruction")
+                print("2. 🚀 Preset Demo - Showcase key performance differences") 
+                print("3. 📋 Show Examples - Sample CAD instructions")
+            else:
+                print("1. ❌ Interactive Mode (Ollama required)")
+                print("2. ❌ Preset Demo (Ollama required)") 
+                print("3. ❌ Show Examples (Ollama required)")
             
-            if choice == '1':
+            # STEP generation feature (requires FreeCAD)
+            if STEP_GENERATION_AVAILABLE:
+                print("4. 🎿 Generate Iceman STEP File - Create 3D model")
+            else:
+                print("4. ❌ Generate STEP File (FreeCAD required)")
+            
+            print("5. 💡 Installation Help - Setup instructions")
+            print("6. 🚪 Exit")
+            
+            choice = input(f"\nChoice (1-6): ").strip()
+            
+            if choice == '1' and ollama_available:
                 self.interactive_mode()
-            elif choice == '2':
+            elif choice == '2' and ollama_available:
                 self.run_preset_demo()
-            elif choice == '3':
+            elif choice == '3' and ollama_available:
                 self.show_examples()
-            elif choice == '4':
+            elif choice == '4' and STEP_GENERATION_AVAILABLE:
+                self.generate_step_file()
+            elif choice == '5':
+                self.show_installation_help()
+            elif choice == '6':
                 print("👋 Goodbye!")
                 break
+            elif choice in ['1', '2', '3'] and not ollama_available:
+                print("❌ Ollama is required for LLM features")
+                print("💡 Choose option 5 for installation help")
+            elif choice == '4' and not STEP_GENERATION_AVAILABLE:
+                print("❌ FreeCAD is required for STEP file generation")
+                print("💡 Choose option 5 for installation help")
             else:
-                print("❌ Invalid choice. Please enter 1-4.")
+                print("❌ Invalid choice. Please enter 1-6.")
+    
+    def show_installation_help(self):
+        """Show installation instructions for dependencies"""
+        print("\n🔧 INSTALLATION HELP")
+        print("="*50)
+        
+        print("\n📦 OLLAMA (Required for LLM features):")
+        print("   macOS:     brew install ollama")
+        print("   Windows:   Download from https://ollama.com/")
+        print("   Linux:     curl -fsSL https://ollama.com/install.sh | sh")
+        print("\n   After installation:")
+        print("   1. Start: ollama serve")
+        print("   2. Download model: ollama pull gemma3:1b")
+        
+        print("\n📦 FREECAD (Required for STEP file generation):")
+        print("   macOS:     brew install freecad")
+        print("   Windows:   Download from https://www.freecad.org/")
+        print("   Linux:     sudo apt install freecad")
+        print("   Python:    pip install freecad")
+        
+        print("\n✅ VERIFICATION:")
+        print("   • Restart this program after installation")
+        print("   • Both features will be automatically detected")
+        
+        print("\n🎯 STANDALONE OPTIONS:")
+        print("   • For STEP files only: python3 iceman_demo.py")
+        print("   • For direct generation: python3 freecad_generator.py")
 
 def main():
     demo = CADModelDemo()
