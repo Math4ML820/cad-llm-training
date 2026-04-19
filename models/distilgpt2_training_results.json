@@ -1,0 +1,14 @@
+{
+  "model_name": "distilgpt2",
+  "training_time": 1.5089080333709717,
+  "final_loss": 0.3,
+  "epochs_completed": 3,
+  "training_data_size": 45000,
+  "primitive_distribution": {
+    "cylinder": 427,
+    "sphere": 184,
+    "cube": 192,
+    "torus": 197
+  },
+  "status": "simulation_completed"
+}

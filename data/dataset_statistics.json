@@ -1,0 +1,10 @@
+{
+  "cubes": 10000,
+  "spheres": 10000,
+  "cylinders": 10000,
+  "cones": 10000,
+  "torus": 10000,
+  "total": 50000,
+  "training_samples": 45000,
+  "test_samples": 5000
+}
